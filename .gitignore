@@ -1,1 +1,23 @@
-.vercel
+# فایل‌های محرمانه
+.env
+.env.local
+.env.production
+*.key
+*.pem
+config.json
+secrets.json
+
+# لاگ‌ها
+*.log
+logs/
+
+# دایرکتوری‌ها
+node_modules/
+dist/
+build/
+.coverage/
+.nyc_output/
+
+# سیستم‌فایل
+.DS_Store
+Thumbs.db
