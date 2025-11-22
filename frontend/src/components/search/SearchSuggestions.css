@@ -1,0 +1,258 @@
+.search-suggestions {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  right: 0;
+  background: white;
+  border: 1px solid var(--gray-200);
+  border-radius: 8px;
+  box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1);
+  z-index: 1000;
+  margin-top: 0.5rem;
+  max-height: 400px;
+  overflow-y: auto;
+}
+
+.suggestions-container {
+  padding: 0.5rem 0;
+}
+
+.suggestions-section {
+  margin-bottom: 0.5rem;
+}
+
+.suggestions-section:last-child {
+  margin-bottom: 0;
+}
+
+.section-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.5rem 1rem;
+  border-bottom: 1px solid var(--gray-100);
+}
+
+.section-title {
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--gray-500);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.clear-history-button {
+  background: none;
+  border: none;
+  color: var(--primary-600);
+  font-size: 0.75rem;
+  cursor: pointer;
+  padding: 0.25rem 0.5rem;
+  border-radius: 4px;
+  transition: all 0.2s ease;
+}
+
+.clear-history-button:hover {
+  background: var(--primary-50);
+  color: var(--primary-700);
+}
+
+.suggestions-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.suggestion-item {
+  border-bottom: 1px solid var(--gray-50);
+}
+
+.suggestion-item:last-child {
+  border-bottom: none;
+}
+
+.suggestion-button {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  width: 100%;
+  padding: 0.75rem 1rem;
+  background: none;
+  border: none;
+  text-align: right;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  color: var(--gray-700);
+  font-size: 0.875rem;
+}
+
+.suggestion-button:hover {
+  background: var(--gray-50);
+  color: var(--gray-900);
+}
+
+.suggestion-button:focus {
+  outline: none;
+  background: var(--primary-50);
+  color: var(--primary-700);
+}
+
+.suggestion-icon {
+  flex-shrink: 0;
+  font-size: 1rem;
+  opacity: 0.6;
+}
+
+.suggestion-text {
+  flex: 1;
+  text-align: right;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* بخش لودینگ */
+.loading-section {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 1rem;
+  color: var(--gray-600);
+}
+
+.loading-spinner {
+  width: 16px;
+  height: 16px;
+  border: 2px solid var(--gray-300);
+  border-top: 2px solid var(--primary-500);
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+
+.loading-text {
+  font-size: 0.875rem;
+}
+
+/* بخش عدم یافتن نتیجه */
+.no-results-section {
+  padding: 1rem;
+  text-align: center;
+  color: var(--gray-500);
+}
+
+.no-results-text {
+  font-size: 0.875rem;
+}
+
+/* انیمیشن‌ها */
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+@keyframes slideDown {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.search-suggestions {
+  animation: slideDown 0.2s ease-out;
+}
+
+/* حالت تاریک */
+@media (prefers-color-scheme: dark) {
+  .search-suggestions {
+    background: var(--gray-800);
+    border-color: var(--gray-700);
+  }
+
+  .section-header {
+    border-bottom-color: var(--gray-700);
+  }
+
+  .section-title {
+    color: var(--gray-400);
+  }
+
+  .suggestion-button {
+    color: var(--gray-300);
+  }
+
+  .suggestion-button:hover {
+    background: var(--gray-700);
+    color: var(--gray-100);
+  }
+
+  .suggestion-button:focus {
+    background: var(--primary-900);
+    color: var(--primary-300);
+  }
+
+  .suggestion-item {
+    border-bottom-color: var(--gray-700);
+  }
+
+  .loading-section {
+    color: var(--gray-400);
+  }
+
+  .loading-spinner {
+    border-color: var(--gray-600);
+    border-top-color: var(--primary-500);
+  }
+
+  .no-results-section {
+    color: var(--gray-400);
+  }
+}
+
+/* ریسپانسیو */
+@media (max-width: 768px) {
+  .search-suggestions {
+    position: fixed;
+    top: auto;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    margin-top: 0;
+    border-radius: 12px 12px 0 0;
+    max-height: 50vh;
+  }
+
+  .suggestions-container {
+    padding-bottom: 1rem;
+  }
+
+  .suggestion-button {
+    padding: 1rem;
+  }
+}
+
+/* دسترسی */
+.suggestion-button:focus-visible {
+  outline: 2px solid var(--primary-500);
+  outline-offset: -2px;
+}
+
+.clear-history-button:focus-visible {
+  outline: 2px solid var(--primary-500);
+  outline-offset: 1px;
+}
+
+/* کاهش حرکت */
+@media (prefers-reduced-motion: reduce) {
+  .search-suggestions {
+    animation: none;
+  }
+
+  .loading-spinner {
+    animation: none;
+    border-top-color: transparent;
+  }
+}

@@ -1,0 +1,124 @@
+.table-header {
+  background: var(--gray-50);
+  border-bottom: 2px solid var(--gray-200);
+}
+
+.table-header th {
+  padding: 0;
+  border: none;
+  font-weight: 600;
+  font-size: 0.875rem;
+  color: var(--gray-700);
+  text-align: right;
+  user-select: none;
+}
+
+.select-column {
+  width: 40px;
+  min-width: 40px;
+}
+
+.data-column {
+  transition: background-color 0.2s ease;
+}
+
+.data-column.sortable {
+  cursor: pointer;
+}
+
+.data-column.sortable:hover {
+  background: var(--gray-100);
+}
+
+.data-column.sorted {
+  background: var(--primary-50);
+  color: var(--primary-700);
+}
+
+.header-cell {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.75rem 1rem;
+  gap: 0.5rem;
+}
+
+.select-column .header-cell {
+  justify-content: center;
+  padding: 0.75rem 0.5rem;
+}
+
+.select-column input[type="checkbox"] {
+  width: 16px;
+  height: 16px;
+  cursor: pointer;
+}
+
+.column-title {
+  flex: 1;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.sort-indicator {
+  flex-shrink: 0;
+  font-size: 0.75rem;
+  opacity: 0.6;
+  transition: opacity 0.2s ease;
+}
+
+.data-column.sortable:hover .sort-indicator {
+  opacity: 1;
+}
+
+.data-column.sorted .sort-indicator {
+  opacity: 1;
+}
+
+/* حالت تاریک */
+@media (prefers-color-scheme: dark) {
+  .table-header {
+    background: var(--gray-800);
+    border-bottom-color: var(--gray-700);
+  }
+
+  .table-header th {
+    color: var(--gray-300);
+  }
+
+  .data-column.sortable:hover {
+    background: var(--gray-700);
+  }
+
+  .data-column.sorted {
+    background: var(--primary-900);
+    color: var(--primary-300);
+  }
+}
+
+/* ریسپانسیو */
+@media (max-width: 768px) {
+  .table-header th {
+    font-size: 0.8125rem;
+  }
+
+  .header-cell {
+    padding: 0.5rem 0.75rem;
+  }
+
+  .column-title {
+    font-size: 0.8125rem;
+  }
+}
+
+/* دسترسی */
+.table-header th:focus-within {
+  outline: 2px solid var(--primary-500);
+  outline-offset: -2px;
+}
+
+.select-column input[type="checkbox"]:focus {
+  outline: 2px solid var(--primary-500);
+  outline-offset: 1px;
+}

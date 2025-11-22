@@ -1,0 +1,202 @@
+.table-body {
+  background: white;
+}
+
+.table-row {
+  transition: all 0.2s ease;
+  border-bottom: 1px solid var(--gray-100);
+}
+
+.table-row:hover {
+  background: var(--gray-50);
+}
+
+.table-row.clickable {
+  cursor: pointer;
+}
+
+.table-row.clickable:hover {
+  background: var(--gray-100);
+}
+
+.table-row.selected {
+  background: var(--primary-50);
+  border-left: 3px solid var(--primary-500);
+}
+
+.table-row.selected:hover {
+  background: var(--primary-100);
+}
+
+.select-cell,
+.data-cell {
+  padding: 0;
+  border: none;
+  vertical-align: middle;
+}
+
+.select-cell {
+  width: 40px;
+  text-align: center;
+}
+
+.cell-content {
+  padding: 0.75rem 1rem;
+  display: flex;
+  align-items: center;
+  min-height: 52px;
+}
+
+.select-cell .cell-content {
+  justify-content: center;
+  padding: 0.75rem 0.5rem;
+}
+
+.select-cell input[type="checkbox"] {
+  width: 16px;
+  height: 16px;
+  cursor: pointer;
+}
+
+.data-cell.align-center .cell-content {
+  justify-content: center;
+  text-align: center;
+}
+
+.data-cell.align-left .cell-content {
+  justify-content: flex-start;
+  text-align: left;
+}
+
+.data-cell.align-right .cell-content {
+  justify-content: flex-end;
+  text-align: right;
+}
+
+/* حالت خالی */
+.empty-state {
+  text-align: center;
+  padding: 3rem 1rem;
+  color: var(--gray-500);
+}
+
+.empty-content {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1rem;
+  max-width: 300px;
+  margin: 0 auto;
+}
+
+.empty-icon {
+  font-size: 3rem;
+  opacity: 0.5;
+}
+
+.empty-message {
+  margin: 0;
+  font-size: 1rem;
+  line-height: 1.5;
+}
+
+/* حالت تاریک */
+@media (prefers-color-scheme: dark) {
+  .table-body {
+    background: var(--gray-800);
+  }
+
+  .table-row {
+    border-bottom-color: var(--gray-700);
+  }
+
+  .table-row:hover {
+    background: var(--gray-700);
+  }
+
+  .table-row.clickable:hover {
+    background: var(--gray-600);
+  }
+
+  .table-row.selected {
+    background: var(--primary-900);
+    border-left-color: var(--primary-500);
+  }
+
+  .table-row.selected:hover {
+    background: var(--primary-800);
+  }
+
+  .empty-state {
+    color: var(--gray-400);
+  }
+}
+
+/* ریسپانسیو */
+@media (max-width: 768px) {
+  .cell-content {
+    padding: 0.5rem 0.75rem;
+    min-height: 44px;
+    font-size: 0.875rem;
+  }
+
+  .empty-state {
+    padding: 2rem 1rem;
+  }
+
+  .empty-icon {
+    font-size: 2.5rem;
+  }
+
+  .empty-message {
+    font-size: 0.875rem;
+  }
+}
+
+/* انیمیشن‌ها */
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(5px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.table-row {
+  animation: fadeIn 0.3s ease-out;
+}
+
+.table-row:nth-child(even) {
+  animation-delay: 0.05s;
+}
+
+.table-row:nth-child(odd) {
+  animation-delay: 0.1s;
+}
+
+/* دسترسی */
+.table-row:focus-within {
+  outline: 2px solid var(--primary-500);
+  outline-offset: -2px;
+}
+
+.select-cell input[type="checkbox"]:focus {
+  outline: 2px solid var(--primary-500);
+  outline-offset: 1px;
+}
+
+.data-cell:focus-within {
+  outline: 2px solid var(--primary-500);
+  outline-offset: -2px;
+}
+
+/* کاهش حرکت */
+@media (prefers-reduced-motion: reduce) {
+  .table-row {
+    animation: none;
+    transition: none;
+  }
+}

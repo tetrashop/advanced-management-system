@@ -1,0 +1,212 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>داشبورد مدیریت پیشرفته</title>
+    <link rel="stylesheet" href="css/style.css">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css">
+</head>
+<body>
+    <!-- نوار کناری -->
+    <nav id="sidebar" class="sidebar">
+        <div class="sidebar-header">
+            <h3>🚀 مدیریت پیشرفته</h3>
+        </div>
+        <ul class="sidebar-menu">
+            <li><a href="#dashboard" class="active"><i class="bi bi-speedometer2"></i> داشبورد</a></li>
+            <li><a href="#users"><i class="bi bi-people"></i> مدیریت کاربران</a></li>
+            <li><a href="#analytics"><i class="bi bi-graph-up"></i> آمار و گزارش‌ها</a></li>
+            <li><a href="#settings"><i class="bi bi-gear"></i> تنظیمات</a></li>
+        </ul>
+    </nav>
+
+    <!-- محتوای اصلی -->
+    <div class="main-content">
+        <!-- نوار بالایی -->
+        <header class="top-header">
+            <button id="sidebarToggle" class="btn btn-light">
+                <i class="bi bi-list"></i>
+            </button>
+            <div class="header-actions">
+                <span id="userWelcome">خوش آمدید!</span>
+                <button id="logoutBtn" class="btn btn-outline-danger btn-sm">خروج</button>
+            </div>
+        </header>
+
+        <!-- محتوای صفحات -->
+        <div class="content-area">
+            <!-- صفحه داشبورد -->
+            <div id="dashboard" class="page active">
+                <div class="page-header">
+                    <h2><i class="bi bi-speedometer2"></i> داشبورد مدیریت</h2>
+                    <p>نمای کلی از سیستم و آمار مهم</p>
+                </div>
+
+                <div class="stats-cards">
+                    <div class="stat-card">
+                        <div class="stat-icon users">
+                            <i class="bi bi-people"></i>
+                        </div>
+                        <div class="stat-info">
+                            <h3 id="totalUsers">0</h3>
+                            <p>کاربران کل</p>
+                        </div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-icon active">
+                            <i class="bi bi-check-circle"></i>
+                        </div>
+                        <div class="stat-info">
+                            <h3 id="activeUsers">0</h3>
+                            <p>کاربران فعال</p>
+                        </div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-icon revenue">
+                            <i class="bi bi-currency-dollar"></i>
+                        </div>
+                        <div class="stat-info">
+                            <h3 id="todayLogins">0</h3>
+                            <p>ورودهای امروز</p>
+                        </div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-icon growth">
+                            <i class="bi bi-graph-up-arrow"></i>
+                        </div>
+                        <div class="stat-info">
+                            <h3 id="adminUsers">0</h3>
+                            <p>کاربران ادمین</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="dashboard-content">
+                    <div class="row">
+                        <div class="col-md-8">
+                            <div class="card">
+                                <div class="card-header">
+                                    <h5>کاربران اخیر</h5>
+                                </div>
+                                <div class="card-body">
+                                    <div id="recentUsers" class="recent-users">
+                                        <!-- لیست کاربران اخیر -->
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="card">
+                                <div class="card-header">
+                                    <h5>عملیات سریع</h5>
+                                </div>
+                                <div class="card-body">
+                                    <button class="quick-action-btn" onclick="showModal('addUser')">
+                                        <i class="bi bi-person-plus"></i>
+                                        افزودن کاربر
+                                    </button>
+                                    <button class="quick-action-btn" onclick="exportData()">
+                                        <i class="bi bi-download"></i>
+                                        خروجی گزارش
+                                    </button>
+                                    <button class="quick-action-btn" onclick="showModal('systemHealth')">
+                                        <i class="bi bi-heart-pulse"></i>
+                                        سلامت سیستم
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- صفحه مدیریت کاربران -->
+            <div id="users" class="page">
+                <div class="page-header">
+                    <h2><i class="bi bi-people"></i> مدیریت کاربران</h2>
+                    <p>مدیریت و ویرایش کاربران سیستم</p>
+                </div>
+                
+                <div class="users-table-container">
+                    <div class="table-actions">
+                        <button class="btn btn-primary" onclick="showModal('addUser')">
+                            <i class="bi bi-person-plus"></i> افزودن کاربر جدید
+                        </button>
+                        <div class="search-box">
+                            <input type="text" id="userSearch" placeholder="جستجوی کاربر...">
+                            <i class="bi bi-search"></i>
+                        </div>
+                    </div>
+                    <div class="table-responsive">
+                        <table class="table" id="usersTable">
+                            <thead>
+                                <tr>
+                                    <th>نام کاربر</th>
+                                    <th>ایمیل</th>
+                                    <th>نقش</th>
+                                    <th>وضعیت</th>
+                                    <th>تاریخ ایجاد</th>
+                                    <th>عملیات</th>
+                                </tr>
+                            </thead>
+                            <tbody id="usersTableBody">
+                                <!-- داده‌های کاربران -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- مودال‌ها -->
+    <div id="modals">
+        <!-- مودال افزودن کاربر -->
+        <div id="addUserModal" class="modal">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5>افزودن کاربر جدید</h5>
+                    <span class="close" onclick="closeModal('addUser')">&times;</span>
+                </div>
+                <div class="modal-body">
+                    <form id="addUserForm">
+                        <div class="form-group">
+                            <label>نام</label>
+                            <input type="text" id="firstName" required>
+                        </div>
+                        <div class="form-group">
+                            <label>نام خانوادگی</label>
+                            <input type="text" id="lastName" required>
+                        </div>
+                        <div class="form-group">
+                            <label>ایمیل</label>
+                            <input type="email" id="email" required>
+                        </div>
+                        <div class="form-group">
+                            <label>رمز عبور</label>
+                            <input type="password" id="password" required>
+                        </div>
+                        <div class="form-group">
+                            <label>نقش</label>
+                            <select id="role">
+                                <option value="user">کاربر عادی</option>
+                                <option value="admin">ادمین</option>
+                            </select>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" onclick="closeModal('addUser')">انصراف</button>
+                    <button type="button" class="btn btn-primary" onclick="addNewUser()">ثبت کاربر</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="js/app.js"></script>
+    <script src="js/auth.js"></script>
+    <script src="js/users.js"></script>
+</body>
+</html>

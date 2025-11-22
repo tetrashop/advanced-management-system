@@ -1,0 +1,910 @@
+const express = require('express');
+const { google } = require('googleapis');
+const axios = require('axios');
+const cheerio = require('cheerio');
+const natural = require('natural');
+const fs = require('fs');
+const path = require('path');
+const app = express();
+
+const PORT = process.env.PORT || 3000;
+app.use(express.json());
+
+// تنظیمات Google Drive API
+const SCOPES = ['https://www.googleapis.com/auth/drive.readonly'];
+const GOOGLE_DRIVE_FOLDER_IDS = process.env.GOOGLE_DRIVE_FOLDER_IDS ? 
+    process.env.GOOGLE_DRIVE_FOLDER_IDS.split(',') : [];
+
+// پایگاه دانش اصلی
+
+// محتوای تست برای شروع کار
+knowledgeBase = [
+    {
+        category: "علوم و فناوری",
+        subcategory: "برنامه‌نویسی",
+        content: "Node.js یک محیط اجرایی جاوااسکریپت برای سمت سرور است که بر پایه موتور V8 کروم ساخته شده است.",
+        source: "سیستم تست"
+    },
+    {
+        category: "ادبیات فارسی", 
+        subcategory: "شعر کلاسیک",
+        content: "بنی آدم اعضای یک پیکرند که در آفرینش ز یک گوهرند چو عضوی به درد آورد روزگار دگر عضوها را نماند قرار",
+        source: "سعدی"
+    },
+    {
+        category: "فلسفه و عرفان",
+        subcategory: "عرفان اسلامی",
+        content: "عارف کسی است که خدا را از راه شهود و کشف باطنی می‌شناسد نه فقط از راه استدلال و برهان.",
+        source: "سیستم تست"
+    },
+    {
+        category: "تاریخ و تمدن",
+        subcategory: "ایران باستان",
+        content: "تمدن ایران باستان یکی از کهن‌ترین و تاثیرگذارترین تمدن‌های جهان است که میراث فرهنگی غنی از خود به جای گذاشته است.",
+        source: "سیستم تست"
+    },
+    {
+        category: "دین و مذهب",
+        subcategory: "اسلام",
+        content: "اسلام دینی یکتاپرستانه است که بر پایه قرآن و سنت پیامبر اسلام بنا شده است.",
+        source: "سیستم تست"
+    }
+];
+console.log('📚 محتوای تست بارگذاری شد:', knowledgeBase.length, 'مورد');
+
+ };
+
+// تنظیم احراز هویت Google
+function getAuth() {
+    const auth = new google.auth.GoogleAuth({
+        keyFile: process.env.GOOGLE_SERVICE_ACCOUNT_KEY || null,
+        credentials: process.env.GOOGLE_CREDENTIALS ? JSON.parse(process.env.GOOGLE_CREDENTIALS) : null,
+        scopes: SCOPES,
+    });
+    return auth;
+}
+
+// خواندن فایل‌ها از Google Drive
+async function loadFromGoogleDrive() {
+    try {
+        const auth = getAuth();
+        const drive = google.drive({ version: 'v3', auth });
+        
+        console.log('📂 در حال اتصال به Google Drive...');
+        
+        for (const folderId of GOOGLE_DRIVE_FOLDER_IDS) {
+            const response = await drive.files.list({
+                q: `'${folderId}' in parents and mimeType contains 'text/'`,
+                fields: 'files(id, name, mimeType, webViewLink)'
+            });
+
+            for (const file of response.data.files) {
+                console.log(`📖 در حال خواندن فایل: ${file.name}`);
+                
+                try {
+                    const fileResponse = await drive.files.get({
+                        fileId: file.id,
+                        alt: 'media'
+                    }, { responseType: 'stream' });
+
+                    let content = '';
+                    await new Promise((resolve, reject) => {
+                        fileResponse.data
+                            .on('data', chunk => content += chunk)
+                            .on('end', resolve)
+                            .on('error', reject);
+                    });
+
+                    await processContent(content, file.name);
+                    
+                } catch (error) {
+                    console.error(`❌ خطا در خواندن فایل ${file.name}:`, error.message);
+                }
+            }
+        }
+        
+        console.log('✅ بارگذاری از Google Drive کامل شد');
+    } catch (error) {
+        console.error('❌ خطا در اتصال به Google Drive:', error.message);
+    }
+}
+
+// پردازش محتوا و اضافه کردن به پایگاه دانش
+async function processContent(content, filename) {
+    const lines = content.split('\n').filter(line => line.trim().length > 10);
+    
+    for (const line of lines) {
+        const trimmedLine = line.trim();
+        if (trimmedLine.length < 15) continue;
+
+        // تشخیص دسته‌بندی خودکار بر اساس کلمات کلیدی
+        let category = 'ادبیات فارسی';
+        let subcategory = 'متفرقه';
+
+        if (trimmedLine.includes('شعر') || trimmedLine.includes('غزل') || trimmedLine.includes('قصیده')) {
+            category = 'ادبیات فارسی';
+            subcategory = trimmedLine.length < 100 ? 'شعر کلاسیک' : 'شعر معاصر';
+        } else if (trimmedLine.includes('قرآن') || trimmedLine.includes('حدیث') || trimmedLine.includes('روایت')) {
+            category = 'دین و مذهب';
+            subcategory = 'قرآن و تفسیر';
+        } else if (trimmedLine.includes('فلسفه') || trimmedLine.includes('حکمت') || trimmedLine.includes('عرفان')) {
+            category = 'فلسفه و عرفان';
+            subcategory = 'فلسفه اسلامی';
+        } else if (trimmedLine.includes('تاریخ') || trimmedLine.includes('ساسانی') || trimmedLine.includes('هخامنشی')) {
+            category = 'تاریخ و تمدن';
+            subcategory = 'تاریخ ایران';
+        } else if (trimmedLine.includes('ریاضی') || trimmedLine.includes('فیزیک') || trimmedCode.includes('الگوریتم')) {
+            category = 'علوم و فناوری';
+            subcategory = 'ریاضیات';
+        }
+
+        if (!knowledgeBase[category]) knowledgeBase[category] = {};
+        if (!knowledgeBase[category][subcategory]) knowledgeBase[category][subcategory] = [];
+
+        knowledgeBase[category][subcategory].push({
+            content: trimmedLine,
+            source: `Google Drive: ${filename}`,
+            timestamp: new Date().toISOString()
+        });
+    }
+}
+
+// API جستجوی پیشرفته
+app.get('/api/search/:query', (req, res) => {
+    const query = req.params.query.toLowerCase();
+    const { category, limit = 50 } = req.query;
+    
+    const results = [];
+    const tokenizer = new natural.WordTokenizer();
+    
+    Object.entries(knowledgeBase).forEach(([cat, subcategories]) => {
+        if (category && category !== cat) return;
+        
+        Object.entries(subcategories).forEach(([subcat, items]) => {
+            items.forEach(item => {
+                const content = typeof item === 'string' ? item : item.content;
+                const relevance = calculateRelevance(content, query, tokenizer);
+                
+                if (relevance > 0.1) { // آستانه ارتباط
+                    results.push({
+                        category: cat,
+                        subcategory: subcat,
+                        content: content,
+                        source: typeof item === 'object' ? item.source : 'داخلی',
+                        relevance: relevance,
+                        preview: generatePreview(content, query)
+                    });
+                }
+            });
+        });
+    });
+    
+    res.json({
+        success: true,
+        query,
+        results: results
+            .sort((a, b) => b.relevance - a.relevance)
+            .slice(0, parseInt(limit)),
+        total: results.length,
+        categories: Object.keys(knowledgeBase)
+    });
+});
+
+// جستجوی هوشمند با NLP
+app.post('/api/advanced-search', (req, res) => {
+    const { query, categories = [], minRelevance = 0.3 } = req.body;
+    
+    if (!query) {
+        return res.status(400).json({ success: false, error: 'پرس‌وجو الزامی است' });
+    }
+
+    const results = [];
+    const tokenizer = new natural.WordTokenizer();
+    const stemmer = natural.PorterStemmerFa;
+    
+    const queryStems = tokenizer.tokenize(query.toLowerCase()).map(token => stemmer.stem(token));
+    
+    Object.entries(knowledgeBase).forEach(([category, subcategories]) => {
+        if (categories.length > 0 && !categories.includes(category)) return;
+        
+        Object.entries(subcategories).forEach(([subcategory, items]) => {
+            items.forEach(item => {
+                const content = typeof item === 'string' ? item : item.content;
+                const relevance = calculateAdvancedRelevance(content, query, queryStems, tokenizer, stemmer);
+                
+                if (relevance >= minRelevance) {
+                    results.push({
+                        category,
+                        subcategory,
+                        content,
+                        source: typeof item === 'object' ? item.source : 'داخلی',
+                        relevance,
+                        highlighted: highlightText(content, query)
+                    });
+                }
+            });
+        });
+    });
+    
+    res.json({
+        success: true,
+        query,
+        results: results.sort((a, b) => b.relevance - a.relevance),
+        total: results.length,
+        metrics: {
+            averageRelevance: results.length > 0 ? 
+                results.reduce((sum, r) => sum + r.relevance, 0) / results.length : 0
+        }
+    });
+});
+
+// محاسبه ارتباط پیشرفته
+function calculateAdvancedRelevance(text, query, queryStems, tokenizer, stemmer) {
+    const textStems = tokenizer.tokenize(text.toLowerCase()).map(token => stemmer.stem(token));
+    
+    let exactMatches = 0;
+    let stemMatches = 0;
+    
+    queryStems.forEach(stem => {
+        if (textStems.includes(stem)) {
+            stemMatches++;
+        }
+    });
+    
+    const words = query.toLowerCase().split(' ');
+    words.forEach(word => {
+        if (text.toLowerCase().includes(word)) {
+            exactMatches++;
+        }
+    });
+    
+    const exactWeight = 0.7;
+    const stemWeight = 0.3;
+    
+    return (exactMatches * exactWeight + stemMatches * stemWeight) / Math.max(words.length, 1);
+}
+
+// تولید پیش‌نمایش
+function generatePreview(text, query, length = 150) {
+    const index = text.toLowerCase().indexOf(query.toLowerCase());
+    if (index === -1) {
+        return text.substring(0, length) + (text.length > length ? '...' : '');
+    }
+    
+    const start = Math.max(0, index - 50);
+    const end = Math.min(text.length, index + query.length + 100);
+    let preview = text.substring(start, end);
+    
+    if (start > 0) preview = '...' + preview;
+    if (end < text.length) preview = preview + '...';
+    
+    return preview;
+}
+
+// هایلایت متن
+function highlightText(text, query) {
+    const words = query.toLowerCase().split(' ').filter(w => w.length > 2);
+    let highlighted = text;
+    
+    words.forEach(word => {
+        const regex = new RegExp(`(${word})`, 'gi');
+        highlighted = highlighted.replace(regex, '<mark>$1</mark>');
+    });
+    
+    return highlighted;
+}
+
+// محاسبه ارتباط ساده
+function calculateRelevance(text, query, tokenizer) {
+    const textTokens = tokenizer.tokenize(text.toLowerCase());
+    const queryTokens = tokenizer.tokenize(query.toLowerCase());
+    
+    if (queryTokens.length === 0) return 0;
+    
+    let matches = 0;
+    queryTokens.forEach(qToken => {
+        if (textTokens.some(tToken => tToken.includes(qToken) || qToken.includes(tToken))) {
+            matches++;
+        }
+    });
+    
+    return matches / queryTokens.length;
+}
+
+// API دریافت آمار
+app.get('/api/stats', (req, res) => {
+    let totalItems = 0;
+    let totalCategories = 0;
+    let totalSubcategories = 0;
+    
+    Object.values(knowledgeBase).forEach(subcategories => {
+        totalCategories++;
+        Object.values(subcategories).forEach(items => {
+            totalSubcategories++;
+            totalItems += items.length;
+        });
+    });
+    
+    res.json({
+        success: true,
+        stats: {
+            totalItems,
+            totalCategories,
+            totalSubcategories,
+            lastUpdated: new Date().toISOString(),
+            sources: ['Google Drive', 'پایگاه داخلی']
+        }
+    });
+});
+
+// API افزودن محتوای جدید
+app.post('/api/content', (req, res) => {
+    const { category, subcategory, content, source = 'کاربر' } = req.body;
+    
+    if (!category || !subcategory || !content) {
+        return res.status(400).json({ 
+            success: false, 
+            error: 'دسته‌بندی، زیردسته و محتوا الزامی هستند' 
+        });
+    }
+    
+    if (!knowledgeBase[category]) {
+        knowledgeBase[category] = {};
+    }
+    if (!knowledgeBase[category][subcategory]) {
+        knowledgeBase[category][subcategory] = [];
+    }
+    
+    const newItem = {
+        content: content.trim(),
+        source: source,
+        timestamp: new Date().toISOString(),
+        addedBy: 'user'
+    };
+    
+    knowledgeBase[category][subcategory].push(newItem);
+    
+    res.json({
+        success: true,
+        message: 'محتوا با موفقیت اضافه شد',
+        item: newItem,
+        totalInCategory: knowledgeBase[category][subcategory].length
+    });
+});
+
+// API همگام‌سازی با Google Drive
+app.post('/api/sync/drive', async (req, res) => {
+    try {
+        await loadFromGoogleDrive();
+        
+        res.json({
+            success: true,
+            message: 'همگام‌سازی با Google Drive انجام شد',
+            timestamp: new Date().toISOString()
+        });
+    } catch (error) {
+        res.status(500).json({
+            success: false,
+            error: 'خطا در همگام‌سازی: ' + error.message
+        });
+    }
+});
+
+// Health check
+app.get('/health', (req, res) => {
+    res.json({
+        status: 'healthy',
+        service: 'نطق مصطلح - پایگاه دانش پیشرفته',
+        version: '2.0.0',
+        timestamp: new Date().toISOString(),
+        knowledgeBase: {
+            categories: Object.keys(knowledgeBase).length,
+            totalItems: Object.values(knowledgeBase).reduce((total, subcats) => 
+                total + Object.values(subcats).reduce((sum, items) => sum + items.length, 0), 0
+            )
+        }
+    });
+});
+
+// روت اصلی - رابط کاربری پیشرفته
+app.get('/', (req, res) => {
+    const html = `
+    <!DOCTYPE html>
+    <html lang="fa" dir="rtl">
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>نطق مصطلح - پایگاه دانش عظیم متصل به Google Drive</title>
+        <style>
+            * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Segoe UI', Tahoma, sans-serif; }
+            body { background: linear-gradient(135deg, #1e3c72, #2a5298); color: white; min-height: 100vh; }
+            .header { background: rgba(255,255,255,0.1); padding: 50px 20px; text-align: center; backdrop-filter: blur(10px); border-bottom: 1px solid rgba(255,255,255,0.2); }
+            .container { max-width: 1400px; margin: 0 auto; padding: 20px; }
+            .dashboard { display: grid; grid-template-columns: 300px 1fr; gap: 30px; margin: 30px 0; }
+            .sidebar { background: rgba(255,255,255,0.1); padding: 25px; border-radius: 15px; height: fit-content; }
+            .main-content { background: rgba(255,255,255,0.05); padding: 30px; border-radius: 15px; }
+            .search-box { background: rgba(255,255,255,0.1); padding: 25px; border-radius: 12px; margin-bottom: 25px; }
+            input, select, textarea, button { width: 100%; padding: 12px 15px; margin: 8px 0; border: 1px solid rgba(255,255,255,0.3); border-radius: 8px; background: rgba(255,255,255,0.1); color: white; font-size: 1em; }
+            button { background: #3498db; border: none; cursor: pointer; transition: all 0.3s ease; font-weight: 600; }
+            button:hover { background: #2980b9; transform: translateY(-2px); }
+            button.success { background: #27ae60; }
+            button.warning { background: #f39c12; }
+            button.danger { background: #e74c3c; }
+            .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 15px; margin: 25px 0; }
+            .stat-card { background: rgba(255,255,255,0.1); padding: 20px; border-radius: 10px; text-align: center; }
+            .result-item { background: rgba(255,255,255,0.08); padding: 20px; border-radius: 10px; margin: 15px 0; border-right: 4px solid #3498db; transition: all 0.3s ease; }
+            .result-item:hover { background: rgba(255,255,255,0.12); transform: translateX(-5px); }
+            .category-badge { background: #e74c3c; padding: 4px 12px; border-radius: 15px; font-size: 0.8em; margin-left: 8px; display: inline-block; }
+            .source-badge { background: #9b59b6; padding: 3px 10px; border-radius: 12px; font-size: 0.75em; margin-right: 8px; }
+            mark { background: #f1c40f; color: #2c3e50; padding: 2px 4px; border-radius: 3px; }
+            .relevance-bar { height: 6px; background: rgba(255,255,255,0.2); border-radius: 3px; margin: 10px 0; overflow: hidden; }
+            .relevance-fill { height: 100%; background: #2ecc71; border-radius: 3px; }
+            .sync-status { background: rgba(255,255,255,0.1); padding: 15px; border-radius: 8px; margin: 15px 0; }
+            .advanced-options { background: rgba(255,255,255,0.05); padding: 20px; border-radius: 10px; margin: 20px 0; }
+            .tab-container { margin: 20px 0; }
+            .tab-buttons { display: flex; gap: 10px; margin-bottom: 20px; }
+            .tab-button { flex: 1; text-align: center; padding: 12px; background: rgba(255,255,255,0.1); border: none; border-radius: 8px; cursor: pointer; transition: all 0.3s ease; }
+            .tab-button.active { background: #3498db; }
+            .tab-content { display: none; }
+            .tab-content.active { display: block; }
+        </style>
+    </head>
+    <body>
+        <div class="header">
+            <h1 style="font-size: 2.8em; margin-bottom: 10px;">نطق مصطلح</h1>
+            <p style="font-size: 1.3em; opacity: 0.9;">پایگاه دانش عظیم متصل به Google Drive - مستقر روی Vercel</p>
+            <p style="opacity: 0.8; margin-top: 10px;">اتصال به حساب‌های: ramin.edjlal1359@gmail.com | ramin.edjlal@gmail.com</p>
+        </div>
+
+        <div class="container">
+            <div class="dashboard">
+                <!-- سایدبار -->
+                <div class="sidebar">
+                    <h3 style="margin-bottom: 20px; color: #3498db;">📊 آمار پایگاه</h3>
+                    <div id="statsContainer">
+                        <!-- آمار توسط JavaScript پر می‌شود -->
+                    </div>
+                    
+                    <div class="sync-status">
+                        <h4 style="margin-bottom: 10px; color: #f39c12;">🔄 همگام‌سازی</h4>
+                        <button onclick="syncWithGoogleDrive()" class="warning">همگام‌سازی با Google Drive</button>
+                        <div id="syncStatus" style="margin-top: 10px; font-size: 0.9em; opacity: 0.8;"></div>
+                    </div>
+                    
+                    <div style="margin-top: 25px;">
+                        <h4 style="margin-bottom: 15px; color: #2ecc71;">📚 دسته‌بندی‌ها</h4>
+                        <div id="categoriesList">
+                            <!-- دسته‌بندی‌ها توسط JavaScript پر می‌شود -->
+                        </div>
+                    </div>
+                </div>
+
+                <!-- محتوای اصلی -->
+                <div class="main-content">
+                    <div class="tab-container">
+                        <div class="tab-buttons">
+                            <button class="tab-button active" onclick="switchTab('search')">🔍 جستجو</button>
+                            <button class="tab-button" onclick="switchTab('add')">📝 افزودن محتوا</button>
+                            <button class="tab-button" onclick="switchTab('advanced')">🎯 جستجوی پیشرفته</button>
+                        </div>
+                        
+                        <!-- تب جستجو -->
+                        <div id="tab-search" class="tab-content active">
+                            <div class="search-box">
+                                <h3 style="margin-bottom: 15px; color: #3498db;">جستجو در پایگاه دانش</h3>
+                                <input type="text" id="searchInput" placeholder="عبارت، کلمه یا مفهوم مورد نظر را وارد کنید..." 
+                                       style="font-size: 1.1em; padding: 15px;">
+                                <div style="display: grid; grid-template-columns: 1fr auto; gap: 10px; margin-top: 10px;">
+                                    <select id="categoryFilter">
+                                        <option value="">همه دسته‌بندی‌ها</option>
+                                    </select>
+                                    <button onclick="performSearch()" class="success" style="white-space: nowrap;">جستجو</button>
+                                </div>
+                            </div>
+                            
+                            <div id="searchResults">
+                                <!-- نتایج جستجو اینجا نمایش داده می‌شوند -->
+                            </div>
+                        </div>
+                        
+                        <!-- تب افزودن محتوا -->
+                        <div id="tab-add" class="tab-content">
+                            <div class="search-box">
+                                <h3 style="margin-bottom: 15px; color: #2ecc71;">افزودن محتوای جدید</h3>
+                                <select id="addCategorySelect" required>
+                                    <option value="">انتخاب دسته‌بندی</option>
+                                </select>
+                                <input type="text" id="addSubcategory" placeholder="زیردسته (اختیاری)">
+                                <textarea id="addContent" placeholder="محتوا را اینجا وارد کنید..." rows="6" required></textarea>
+                                <button onclick="addNewContent()" class="success">➕ افزودن به پایگاه دانش</button>
+                            </div>
+                        </div>
+                        
+                        <!-- تب جستجوی پیشرفته -->
+                        <div id="tab-advanced" class="tab-content">
+                            <div class="search-box">
+                                <h3 style="margin-bottom: 15px; color: #9b59b6;">جستجوی پیشرفته با هوش مصنوعی</h3>
+                                <textarea id="advancedQuery" placeholder="پرسش یا مفهوم خود را به صورت کامل شرح دهید..." rows="4"></textarea>
+                                
+                                <div class="advanced-options">
+                                    <h4 style="margin-bottom: 10px;">تنظیمات پیشرفته</h4>
+                                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+                                        <div>
+                                            <label>حداقل ارتباط (%)</label>
+                                            <input type="range" id="relevanceRange" min="10" max="100" value="30">
+                                            <span id="relevanceValue">30%</span>
+                                        </div>
+                                        <div>
+                                            <label>تعداد نتایج</label>
+                                            <select id="resultsLimit">
+                                                <option value="10">۱۰ نتیجه</option>
+                                                <option value="25" selected>۲۵ نتیجه</option>
+                                                <option value="50">۵۰ نتیجه</option>
+                                                <option value="100">۱۰۰ نتیجه</option>
+                                            </select>
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <button onclick="performAdvancedSearch()" class="warning">🎯 اجرای جستجوی پیشرفته</button>
+                            </div>
+                            
+                            <div id="advancedResults">
+                                <!-- نتایج جستجوی پیشرفته -->
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <script>
+            // بارگذاری اولیه
+            async function initializeApp() {
+                await loadStats();
+                await loadCategories();
+                await loadCategoryFilters();
+            }
+            
+            // بارگذاری آمار
+            async function loadStats() {
+                try {
+                    const response = await fetch('/api/stats');
+                    const data = await response.json();
+                    
+                    if (data.success) {
+                        document.getElementById('statsContainer').innerHTML = \`
+                            <div class="stats-grid">
+                                <div class="stat-card">
+                                    <div style="font-size: 1.8em;">📚</div>
+                                    <h4>\${data.stats.totalItems.toLocaleString()}</h4>
+                                    <small>مورد محتوا</small>
+                                </div>
+                                <div class="stat-card">
+                                    <div style="font-size: 1.8em;">📂</div>
+                                    <h4>\${data.stats.totalCategories}</h4>
+                                    <small>دسته‌بندی</small>
+                                </div>
+                                <div class="stat-card">
+                                    <div style="font-size: 1.8em;">🔤</div>
+                                    <h4>\${data.stats.totalSubcategories}</h4>
+                                    <small>زیردسته</small>
+                                </div>
+                            </div>
+                            <div style="margin-top: 15px; opacity: 0.8; font-size: 0.9em;">
+                                آخرین بروزرسانی:<br>
+                                \${new Date(data.stats.lastUpdated).toLocaleString('fa-IR')}
+                            </div>
+                        \`;
+                    }
+                } catch (error) {
+                    console.error('خطا در بارگذاری آمار:', error);
+                }
+            }
+            
+            // بارگذاری دسته‌بندی‌ها
+            async function loadCategories() {
+                try {
+                    const response = await fetch('/api/search/test');
+                    const data = await response.json();
+                    
+                    if (data.categories) {
+                        let categoriesHTML = '';
+                        data.categories.forEach(category => {
+                            categoriesHTML += \`<div style="margin: 8px 0; padding: 8px; background: rgba(255,255,255,0.05); border-radius: 6px;">\${category}</div>\`;
+                        });
+                        document.getElementById('categoriesList').innerHTML = categoriesHTML;
+                    }
+                } catch (error) {
+                    console.error('خطا در بارگذاری دسته‌بندی‌ها:', error);
+                }
+            }
+            
+            // بارگذاری فیلترهای دسته‌بندی
+            async function loadCategoryFilters() {
+                try {
+                    const response = await fetch('/api/search/test');
+                    const data = await response.json();
+                    
+                    if (data.categories) {
+                        const categorySelect = document.getElementById('categoryFilter');
+                        const addCategorySelect = document.getElementById('addCategorySelect');
+                        
+                        data.categories.forEach(category => {
+                            const option1 = new Option(category, category);
+                            const option2 = new Option(category, category);
+                            categorySelect.add(option1);
+                            addCategorySelect.add(option2);
+                        });
+                    }
+                } catch (error) {
+                    console.error('خطا در بارگذاری فیلترها:', error);
+                }
+            }
+            
+            // جستجوی ساده
+            async function performSearch() {
+                const query = document.getElementById('searchInput').value;
+                const category = document.getElementById('categoryFilter').value;
+                
+                if (!query) {
+                    alert('لطفاً عبارت جستجو را وارد کنید');
+                    return;
+                }
+                
+                let url = \`/api/search/\${encodeURIComponent(query)}\`;
+                if (category) {
+                    url += \`?category=\${encodeURIComponent(category)}\`;
+                }
+                
+                try {
+                    const response = await fetch(url);
+                    const data = await response.json();
+                    
+                    displaySearchResults(data);
+                } catch (error) {
+                    console.error('خطا در جستجو:', error);
+                    document.getElementById('searchResults').innerHTML = '<div style="text-align: center; color: #e74c3c;">خطا در اتصال به سرور</div>';
+                }
+            }
+            
+            // نمایش نتایج جستجو
+            function displaySearchResults(data) {
+                const container = document.getElementById('searchResults');
+                
+                if (!data.success || data.results.length === 0) {
+                    container.innerHTML = \`
+                        <div style="text-align: center; padding: 40px; opacity: 0.7;">
+                            <div style="font-size: 3em; margin-bottom: 15px;">🔍</div>
+                            <h3>نتیجه‌ای یافت نشد</h3>
+                            <p>عبارت جستجو را تغییر دهید یا از جستجوی پیشرفته استفاده کنید</p>
+                        </div>
+                    \`;
+                    return;
+                }
+                
+                let resultsHTML = \`
+                    <div style="margin-bottom: 20px; display: flex; justify-content: space-between; align-items: center;">
+                        <h3>\${data.results.length} نتیجه برای "\${data.query}"</h3>
+                        <small style="opacity: 0.7;">\${data.total} مورد در کل پایگاه</small>
+                    </div>
+                \`;
+                
+                data.results.forEach(result => {
+                    const relevancePercent = Math.round(result.relevance * 100);
+                    resultsHTML += \`
+                        <div class="result-item">
+                            <div style="display: flex; justify-content: between; align-items: start; margin-bottom: 10px;">
+                                <div>
+                                    <span class="category-badge">\${result.category}</span>
+                                    <span class="category-badge" style="background: #3498db;">\${result.subcategory}</span>
+                                    <span class="source-badge">\${result.source}</span>
+                                </div>
+                                <div style="font-size: 0.9em; opacity: 0.7; direction: ltr;">
+                                    \${relevancePercent}%
+                                </div>
+                            </div>
+                            <div class="relevance-bar">
+                                <div class="relevance-fill" style="width: \${relevancePercent}%"></div>
+                            </div>
+                            <div style="font-size: 1.1em; line-height: 1.6; margin: 15px 0;">
+                                \${result.preview || result.content}
+                            </div>
+                        </div>
+                    \`;
+                });
+                
+                container.innerHTML = resultsHTML;
+            }
+            
+            // جستجوی پیشرفته
+            async function performAdvancedSearch() {
+                const query = document.getElementById('advancedQuery').value;
+                const minRelevance = parseInt(document.getElementById('relevanceRange').value) / 100;
+                const limit = document.getElementById('resultsLimit').value;
+                
+                if (!query) {
+                    alert('لطفاً پرسش خود را وارد کنید');
+                    return;
+                }
+                
+                try {
+                    const response = await fetch('/api/advanced-search', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            query: query,
+                            minRelevance: minRelevance,
+                            limit: parseInt(limit)
+                        })
+                    });
+                    
+                    const data = await response.json();
+                    displayAdvancedResults(data);
+                } catch (error) {
+                    console.error('خطا در جستجوی پیشرفته:', error);
+                }
+            }
+            
+            // نمایش نتایج جستجوی پیشرفته
+            function displayAdvancedResults(data) {
+                const container = document.getElementById('advancedResults');
+                
+                if (!data.success || data.results.length === 0) {
+                    container.innerHTML = \`
+                        <div style="text-align: center; padding: 40px; opacity: 0.7;">
+                            <div style="font-size: 3em; margin-bottom: 15px;">🎯</div>
+                            <h3>نتیجه‌ای یافت نشد</h3>
+                            <p>پرسش خود را تغییر دهید یا حداقل ارتباط را کاهش دهید</p>
+                        </div>
+                    \`;
+                    return;
+                }
+                
+                let resultsHTML = \`
+                    <div style="margin-bottom: 20px; display: flex; justify-content: space-between; align-items: center;">
+                        <h3>\${data.results.length} نتیجه پیشرفته</h3>
+                        <small style="opacity: 0.7;">میانگین ارتباط: \${Math.round(data.metrics.averageRelevance * 100)}%</small>
+                    </div>
+                \`;
+                
+                data.results.forEach(result => {
+                    const relevancePercent = Math.round(result.relevance * 100);
+                    resultsHTML += \`
+                        <div class="result-item">
+                            <div style="display: flex; justify-content: between; align-items: start; margin-bottom: 10px;">
+                                <div>
+                                    <span class="category-badge">\${result.category}</span>
+                                    <span class="category-badge" style="background: #9b59b6;">\${result.subcategory}</span>
+                                    <span class="source-badge">\${result.source}</span>
+                                </div>
+                                <div style="font-size: 0.9em; opacity: 0.7; direction: ltr;">
+                                    \${relevancePercent}%
+                                </div>
+                            </div>
+                            <div class="relevance-bar">
+                                <div class="relevance-fill" style="width: \${relevancePercent}%"></div>
+                            </div>
+                            <div style="font-size: 1.1em; line-height: 1.6; margin: 15px 0;" dir="rtl">
+                                \${result.highlighted || result.content}
+                            </div>
+                        </div>
+                    \`;
+                });
+                
+                container.innerHTML = resultsHTML;
+            }
+            
+            // افزودن محتوای جدید
+            async function addNewContent() {
+                const category = document.getElementById('addCategorySelect').value;
+                const subcategory = document.getElementById('addSubcategory').value || 'متفرقه';
+                const content = document.getElementById('addContent').value;
+                
+                if (!category || !content) {
+                    alert('لطفاً دسته‌بندی و محتوا را وارد کنید');
+                    return;
+                }
+                
+                try {
+                    const response = await fetch('/api/content', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            category: category,
+                            subcategory: subcategory,
+                            content: content,
+                            source: 'مدیریت دستی'
+                        })
+                    });
+                    
+                    const data = await response.json();
+                    
+                    if (data.success) {
+                        alert('محتوا با موفقیت افزوده شد!');
+                        document.getElementById('addContent').value = '';
+                        document.getElementById('addSubcategory').value = '';
+                        loadStats();
+                    }
+                } catch (error) {
+                    alert('خطا در افزودن محتوا');
+                    console.error(error);
+                }
+            }
+            
+            // همگام‌سازی با Google Drive
+            async function syncWithGoogleDrive() {
+                const statusElement = document.getElementById('syncStatus');
+                statusElement.innerHTML = '🔄 در حال همگام‌سازی...';
+                
+                try {
+                    const response = await fetch('/api/sync/drive', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' }
+                    });
+                    
+                    const data = await response.json();
+                    
+                    if (data.success) {
+                        statusElement.innerHTML = \`✅ \${data.message} - \${new Date().toLocaleTimeString('fa-IR')}\`;
+                        loadStats();
+                        loadCategories();
+                    } else {
+                        statusElement.innerHTML = \`❌ \${data.error}\`;
+                    }
+                } catch (error) {
+                    statusElement.innerHTML = '❌ خطا در اتصال به سرور';
+                    console.error(error);
+                }
+            }
+            
+            // تغییر تب
+            function switchTab(tabName) {
+                // غیرفعال کردن تمام تب‌ها
+                document.querySelectorAll('.tab-button').forEach(btn => btn.classList.remove('active'));
+                document.querySelectorAll('.tab-content').forEach(content => content.classList.remove('active'));
+                
+                // فعال کردن تب انتخاب شده
+                event.target.classList.add('active');
+                document.getElementById('tab-' + tabName).classList.add('active');
+            }
+            
+            // مدیریت range
+            document.getElementById('relevanceRange').addEventListener('input', function() {
+                document.getElementById('relevanceValue').textContent = this.value + '%';
+            });
+            
+            // جستجو با Enter
+            document.getElementById('searchInput').addEventListener('keypress', function(e) {
+                if (e.key === 'Enter') performSearch();
+            });
+            
+            document.getElementById('advancedQuery').addEventListener('keypress', function(e) {
+                if (e.key === 'Enter') performAdvancedSearch();
+            });
+            
+            // شروع برنامه
+            document.addEventListener('DOMContentLoaded', initializeApp);
+        </script>
+    </body>
+    </html>
+    `;
+    res.send(html);
+});
+
+// شروع سرور و بارگذاری اولیه از Google Drive
+app.listen(PORT, async () => {
+    console.log('🚀 نطق مصطلح - پایگاه دانش پیشرفته راه‌اندازی شد!');
+    console.log('📍 آدرس: http://localhost:' + PORT);
+    console.log('📚 در حال بارگذاری از Google Drive...');
+    
+    // بارگذاری اولیه از Google Drive (در پس‌زمینه)
+    if (GOOGLE_DRIVE_FOLDER_IDS.length > 0 && process.env.GOOGLE_CREDENTIALS) {
+        setTimeout(() => {
+            loadFromGoogleDrive().catch(console.error);
+        }, 2000);
+    }
+    
+    console.log('🔍 سیستم جستجوی پیشرفته: فعال');
+    console.log('🔄 همگام‌سازی با Google Drive: ' + (GOOGLE_DRIVE_FOLDER_IDS.length > 0 ? 'فعال' : 'غیرفعال'));
+});

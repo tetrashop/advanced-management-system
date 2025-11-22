@@ -1,0 +1,120 @@
+.enhanced-dashboard {
+  --dashboard-bg: #f8fafc;
+  --dashboard-border: #e2e8f0;
+  --dashboard-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+  
+  background: var(--dashboard-bg);
+  border: 1px solid var(--dashboard-border);
+  border-radius: 12px;
+  box-shadow: var(--dashboard-shadow);
+  min-height: 600px;
+  display: flex;
+  flex-direction: column;
+  font-family: var(--font-family);
+}
+
+.dashboard-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1.5rem;
+  border-bottom: 1px solid var(--dashboard-border);
+  background: white;
+  border-radius: 12px 12px 0 0;
+}
+
+.dashboard-header h1 {
+  margin: 0;
+  color: #1e293b;
+  font-size: 1.5rem;
+  font-weight: 600;
+}
+
+.dashboard-actions {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.refresh-btn {
+  background: #3b82f6;
+  color: white;
+  border: none;
+  border-radius: 8px;
+  padding: 0.5rem 1rem;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  font-size: 1.2rem;
+}
+
+.refresh-btn:hover {
+  background: #2563eb;
+  transform: scale(1.05);
+}
+
+.refresh-btn:active {
+  transform: scale(0.95);
+}
+
+.error-banner {
+  background: #fef2f2;
+  color: #dc2626;
+  padding: 1rem;
+  margin: 1rem;
+  border: 1px solid #fecaca;
+  border-radius: 8px;
+  text-align: center;
+}
+
+.dashboard-content {
+  flex: 1;
+  padding: 1.5rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+.dashboard-footer {
+  padding: 1rem 1.5rem;
+  border-top: 1px solid var(--dashboard-border);
+  background: white;
+  border-radius: 0 0 12px 12px;
+  text-align: center;
+  color: #64748b;
+}
+
+/* ریسپانسیو */
+@media (max-width: 768px) {
+  .dashboard-header {
+    flex-direction: column;
+    gap: 1rem;
+    text-align: center;
+  }
+  
+  .dashboard-content {
+    padding: 1rem;
+  }
+}
+
+/* حالت تاریک */
+@media (prefers-color-scheme: dark) {
+  .enhanced-dashboard {
+    --dashboard-bg: #1e293b;
+    --dashboard-border: #334155;
+  }
+  
+  .dashboard-header,
+  .dashboard-footer {
+    background: #0f172a;
+    color: #f1f5f9;
+  }
+}
+
+/* انیمیشن‌ها */
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.enhanced-dashboard {
+  animation: fadeIn 0.3s ease-out;
+}

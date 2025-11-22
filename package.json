@@ -1,0 +1,20 @@
+{
+  "name": "natiq-masthul",
+  "version": "2.0.0",
+  "description": "نطق مصطلح - پایگاه دانش عظیم متصل به Google Drive",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "node server.js"
+  },
+  "dependencies": {
+    "axios": "^1.6.0",
+    "cheerio": "^1.0.0-rc.12",
+    "express": "^4.18.2",
+    "googleapis": "^126.0.1",
+    "natural": "^6.3.0"
+  },
+  "engines": {
+    "node": ">=18.x"
+  }
+}

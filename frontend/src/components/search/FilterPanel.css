@@ -1,0 +1,353 @@
+.filter-panel {
+  background: white;
+  border: 1px solid var(--gray-200);
+  border-radius: 8px;
+  padding: 1.5rem;
+}
+
+.filter-panel-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1.5rem;
+  padding-bottom: 1rem;
+  border-bottom: 1px solid var(--gray-200);
+}
+
+.filter-panel-title {
+  margin: 0;
+  font-size: 1.125rem;
+  font-weight: 600;
+  color: var(--gray-800);
+}
+
+.clear-all-filters {
+  background: none;
+  border: none;
+  color: var(--primary-600);
+  font-size: 0.875rem;
+  cursor: pointer;
+  padding: 0.5rem 0.75rem;
+  border-radius: 4px;
+  transition: all 0.2s ease;
+}
+
+.clear-all-filters:hover {
+  background: var(--primary-50);
+  color: var(--primary-700);
+}
+
+.filter-groups {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+.filter-group {
+  border: 1px solid var(--gray-200);
+  border-radius: 6px;
+  overflow: hidden;
+}
+
+.filter-group-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1rem;
+  background: var(--gray-50);
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.filter-group-header:hover {
+  background: var(--gray-100);
+}
+
+.filter-group-title {
+  margin: 0;
+  font-size: 1rem;
+  font-weight: 600;
+  color: var(--gray-700);
+}
+
+.expand-icon {
+  color: var(--gray-500);
+  font-size: 0.75rem;
+  transition: transform 0.2s ease;
+}
+
+.filter-group-header:hover .expand-icon {
+  color: var(--gray-700);
+}
+
+.filter-group-content {
+  padding: 1rem;
+  background: white;
+}
+
+.filter-item {
+  margin-bottom: 1.25rem;
+}
+
+.filter-item:last-child {
+  margin-bottom: 0;
+}
+
+.filter-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 0.5rem;
+}
+
+.filter-label {
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: var(--gray-700);
+  margin: 0;
+}
+
+.clear-filter {
+  background: none;
+  border: none;
+  color: var(--gray-400);
+  cursor: pointer;
+  padding: 0.25rem;
+  border-radius: 4px;
+  font-size: 0.75rem;
+  transition: all 0.2s ease;
+}
+
+.clear-filter:hover {
+  color: var(--gray-600);
+  background: var(--gray-100);
+}
+
+.filter-control {
+  margin-bottom: 0.5rem;
+}
+
+.filter-input {
+  width: 100%;
+  padding: 0.5rem 0.75rem;
+  border: 1px solid var(--gray-300);
+  border-radius: 4px;
+  font-size: 0.875rem;
+  transition: all 0.2s ease;
+  background: white;
+}
+
+.filter-input:focus {
+  outline: none;
+  border-color: var(--primary-500);
+  box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.1);
+}
+
+.filter-input::placeholder {
+  color: var(--gray-400);
+}
+
+.select-input {
+  cursor: pointer;
+}
+
+.filter-description {
+  font-size: 0.75rem;
+  color: var(--gray-500);
+  line-height: 1.4;
+}
+
+/* خلاصه فیلترهای فعال */
+.active-filters-summary {
+  margin-top: 1.5rem;
+  padding-top: 1.5rem;
+  border-top: 1px solid var(--gray-200);
+}
+
+.summary-title {
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: var(--gray-700);
+  margin-bottom: 0.75rem;
+}
+
+.active-filters-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.active-filter-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  background: var(--primary-50);
+  border: 1px solid var(--primary-200);
+  border-radius: 16px;
+  padding: 0.375rem 0.75rem;
+  font-size: 0.75rem;
+  color: var(--primary-700);
+}
+
+.filter-tag-label {
+  font-weight: 500;
+}
+
+.filter-tag-value {
+  font-weight: 400;
+}
+
+.remove-filter-tag {
+  background: none;
+  border: none;
+  color: var(--primary-500);
+  cursor: pointer;
+  padding: 0.125rem;
+  border-radius: 50%;
+  font-size: 0.625rem;
+  transition: all 0.2s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 16px;
+  height: 16px;
+}
+
+.remove-filter-tag:hover {
+  background: var(--primary-100);
+  color: var(--primary-700);
+}
+
+/* حالت تاریک */
+@media (prefers-color-scheme: dark) {
+  .filter-panel {
+    background: var(--gray-800);
+    border-color: var(--gray-700);
+  }
+
+  .filter-panel-header {
+    border-bottom-color: var(--gray-700);
+  }
+
+  .filter-panel-title {
+    color: var(--gray-200);
+  }
+
+  .filter-group {
+    border-color: var(--gray-700);
+  }
+
+  .filter-group-header {
+    background: var(--gray-700);
+  }
+
+  .filter-group-header:hover {
+    background: var(--gray-600);
+  }
+
+  .filter-group-title {
+    color: var(--gray-200);
+  }
+
+  .expand-icon {
+    color: var(--gray-400);
+  }
+
+  .filter-group-content {
+    background: var(--gray-800);
+  }
+
+  .filter-label {
+    color: var(--gray-300);
+  }
+
+  .filter-input {
+    background: var(--gray-700);
+    border-color: var(--gray-600);
+    color: var(--gray-200);
+  }
+
+  .filter-input::placeholder {
+    color: var(--gray-400);
+  }
+
+  .filter-description {
+    color: var(--gray-400);
+  }
+
+  .active-filters-summary {
+    border-top-color: var(--gray-700);
+  }
+
+  .summary-title {
+    color: var(--gray-300);
+  }
+
+  .active-filter-tag {
+    background: var(--primary-900);
+    border-color: var(--primary-700);
+    color: var(--primary-300);
+  }
+
+  .remove-filter-tag:hover {
+    background: var(--primary-800);
+    color: var(--primary-200);
+  }
+}
+
+/* ریسپانسیو */
+@media (max-width: 768px) {
+  .filter-panel {
+    padding: 1rem;
+  }
+
+  .filter-group-header {
+    padding: 0.75rem;
+  }
+
+  .filter-group-content {
+    padding: 0.75rem;
+  }
+
+  .filter-item {
+    margin-bottom: 1rem;
+  }
+
+  .active-filters-list {
+    gap: 0.375rem;
+  }
+
+  .active-filter-tag {
+    padding: 0.25rem 0.5rem;
+    font-size: 0.6875rem;
+  }
+}
+
+/* دسترسی */
+.filter-input:focus-visible {
+  outline: 2px solid var(--primary-500);
+  outline-offset: 1px;
+}
+
+.clear-all-filters:focus-visible,
+.clear-filter:focus-visible,
+.remove-filter-tag:focus-visible {
+  outline: 2px solid var(--primary-500);
+  outline-offset: 1px;
+}
+
+.filter-group-header:focus-visible {
+  outline: 2px solid var(--primary-500);
+  outline-offset: -2px;
+}
+
+/* کاهش حرکت */
+@media (prefers-reduced-motion: reduce) {
+  .filter-group-header,
+  .clear-all-filters,
+  .clear-filter,
+  .remove-filter-tag,
+  .filter-input {
+    transition: none;
+  }
+}
