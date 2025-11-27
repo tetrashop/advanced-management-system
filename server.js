@@ -1,6 +1,5 @@
 const express = require('express');
 const app = express();
-const PORT = process.env.PORT || 3004;
 
 // 🔧 اضافه کردن هندلر خطاهای全局
 process.on('unhandledRejection', (err) => {
@@ -55,6 +54,12 @@ app.use((req, res, next) => {
   next();
 });
 
+// 🔧 اضافه کردن middleware برای لاگ کردن درخواست‌ها
+app.use((req, res, next) => {
+  console.log(`${new Date().toISOString()} - ${req.method} ${req.url}`);
+  next();
+});
+
 // API Routes پیشرفته
 app.get('/api/search/:query', (req, res) => {
   try {
@@ -62,6 +67,8 @@ app.get('/api/search/:query', (req, res) => {
     const category = req.query.category;
     const minRelevance = parseFloat(req.query.minRelevance) || 0.1;
     const limit = parseInt(req.query.limit) || 25;
+    
+    console.log(`Search request: query=${query}, category=${category}, minRelevance=${minRelevance}`);
     
     const results = knowledgeBase.filter(item => {
         const matchesQuery = item.content.toLowerCase().includes(query) || 
@@ -87,6 +94,36 @@ app.get('/api/search/:query', (req, res) => {
     });
   } catch (error) {
     console.error('Search error:', error);
+    res.status(500).json({ success: false, error: 'خطا در جستجو' });
+  }
+});
+
+// 🔧 اضافه کردن route جستجوی ساده‌تر
+app.get('/api/search', (req, res) => {
+  try {
+    const query = req.query.q;
+    if (!query) {
+      return res.json({
+        success: true,
+        results: [],
+        message: "لطفاً پارامتر جستجو (q) را ارسال کنید"
+      });
+    }
+    
+    const results = knowledgeBase.filter(item => 
+      item.content.toLowerCase().includes(query.toLowerCase()) ||
+      item.category.toLowerCase().includes(query.toLowerCase()) ||
+      item.tags.some(tag => tag.toLowerCase().includes(query.toLowerCase()))
+    );
+    
+    res.json({
+      success: true,
+      query: query,
+      results: results,
+      total: results.length
+    });
+  } catch (error) {
+    console.error('Simple search error:', error);
     res.status(500).json({ success: false, error: 'خطا در جستجو' });
   }
 });
@@ -145,17 +182,6 @@ app.post('/api/content', (req, res) => {
   }
 });
 
-// 🔧 هندلر خطای 404
-app.use((req, res) => {
-  res.status(404).json({ success: false, error: 'مسیر یافت نشد' });
-});
-
-// 🔧 هندلر خطای سرور
-app.use((err, req, res, next) => {
-  console.error('Server error:', err);
-  res.status(500).json({ success: false, error: 'خطای داخلی سرور' });
-});
-
 // صفحه اصلی با طراحی پیشرفته و ریسپانسیو
 app.get('/', (req, res) => {
   try {
@@ -167,7 +193,6 @@ app.get('/', (req, res) => {
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
         <title>نطق مصطلح - پایگاه دانش هوشمند</title>
         <style>
-            /* استایل‌ها بدون تغییر باقی می‌مانند */
             :root {
                 --primary: #2563eb;
                 --secondary: #7c3aed;
@@ -187,17 +212,17 @@ app.get('/', (req, res) => {
             }
             
             body {
-                font-family: 'Vazirmatn', 'Tahoma', sans-serif;
+                font-family: system-ui, -apple-system, sans-serif;
                 background: linear-gradient(135deg, var(--darker) 0%, var(--dark) 100%);
                 color: var(--light);
                 line-height: 1.6;
                 min-height: 100vh;
+                padding: 20px;
             }
             
             .container {
-                max-width: 1400px;
+                max-width: 1200px;
                 margin: 0 auto;
-                padding: 20px;
             }
             
             .header {
@@ -206,103 +231,140 @@ app.get('/', (req, res) => {
                 padding: 30px 0;
                 background: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%);
                 border-radius: 20px;
-                box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
             }
             
             .header h1 {
                 font-size: 2.5rem;
                 margin-bottom: 10px;
-                background: linear-gradient(45deg, #fff, #e0f2fe);
-                -webkit-background-clip: text;
-                -webkit-text-fill-color: transparent;
-                background-clip: text;
             }
             
-            .header p {
-                font-size: 1.2rem;
-                opacity: 0.9;
+            .tabs {
+                display: flex;
+                gap: 10px;
+                margin-bottom: 30px;
+                flex-wrap: wrap;
+                justify-content: center;
             }
             
-            /* بقیه استایل‌ها دقیقاً مانند کد شما */
-            /* ... */
+            .tab-button {
+                padding: 12px 24px;
+                background: rgba(255, 255, 255, 0.1);
+                border: none;
+                color: white;
+                cursor: pointer;
+                border-radius: 12px;
+                font-size: 1rem;
+            }
+            
+            .tab-button.active {
+                background: var(--primary);
+            }
+            
+            .tab-content {
+                display: none;
+                padding: 30px;
+                background: rgba(255, 255, 255, 0.05);
+                border-radius: 20px;
+            }
+            
+            .tab-content.active {
+                display: block;
+            }
+            
+            .search-box {
+                display: flex;
+                gap: 15px;
+                margin-bottom: 30px;
+                flex-wrap: wrap;
+            }
+            
+            .search-input {
+                flex: 1;
+                min-width: 300px;
+                padding: 15px 20px;
+                border: 2px solid rgba(255, 255, 255, 0.2);
+                background: rgba(255, 255, 255, 0.1);
+                color: white;
+                border-radius: 12px;
+                font-size: 1rem;
+            }
+            
+            .btn {
+                padding: 15px 30px;
+                background: var(--primary);
+                color: white;
+                border: none;
+                border-radius: 12px;
+                cursor: pointer;
+                font-size: 1rem;
+            }
+            
+            .result-item {
+                background: rgba(255, 255, 255, 0.05);
+                padding: 25px;
+                margin: 20px 0;
+                border-radius: 16px;
+                border: 1px solid rgba(255, 255, 255, 0.1);
+            }
+            
+            .category-badge {
+                background: var(--success);
+                padding: 6px 12px;
+                border-radius: 20px;
+                font-size: 0.85rem;
+                margin-left: 8px;
+                display: inline-block;
+            }
+            
+            .api-test {
+                background: rgba(255, 255, 255, 0.05);
+                padding: 20px;
+                border-radius: 12px;
+                margin: 20px 0;
+            }
         </style>
     </head>
     <body>
         <div class="container">
             <div class="header">
                 <h1>🧠 نطق مصطلح - پایگاه دانش هوشمند</h1>
-                <p>سیستم پیشرفته جستجو و مدیریت دانش با رابط کاربری مدرن</p>
+                <p>سیستم پیشرفته جستجو و مدیریت دانش - نسخه Vercel</p>
             </div>
 
             <div class="tabs">
-                <button class="tab-button active" onclick="switchTab('search')">🔍 جستجوی پیشرفته</button>
-                <button class="tab-button" onclick="switchTab('stats')">📊 آمار و تحلیل</button>
-                <button class="tab-button" onclick="switchTab('add')">📝 مدیریت محتوا</button>
+                <button class="tab-button active" onclick="switchTab('search')">🔍 جستجو</button>
+                <button class="tab-button" onclick="switchTab('stats')">📊 آمار</button>
+                <button class="tab-button" onclick="switchTab('test')">🧪 تست API</button>
             </div>
 
-            <!-- تب جستجوی پیشرفته -->
             <div id="tab-search" class="tab-content active">
                 <div class="search-box">
                     <input type="text" id="searchInput" class="search-input" placeholder="عبارت مورد نظر را جستجو کنید...">
-                    <select id="categoryFilter" class="filter-select">
-                        <option value="">همه دسته‌ها</option>
-                        <option value="علوم و فناوری">علوم و فناوری</option>
-                        <option value="ادبیات فارسی">ادبیات فارسی</option>
-                        <option value="SS">SS</option>
-                    </select>
-                    <button class="btn" onclick="performSearch()">
-                        <span>🔍 جستجو</span>
-                    </button>
+                    <button class="btn" onclick="performSearch()">جستجو</button>
                 </div>
                 <div id="searchResults"></div>
             </div>
 
-            <!-- تب آمار و تحلیل -->
             <div id="tab-stats" class="tab-content">
-                <h3 style="margin-bottom: 25px; text-align: center;">📊 آمار و تحلیل پیشرفته</h3>
-                <div class="stats-grid">
-                    <div class="stat-card">
-                        <h3>${knowledgeBase.length}</h3>
-                        <p>مورد محتوا</p>
-                    </div>
-                    <div class="stat-card">
-                        <h3>3</h3>
-                        <p>دسته‌بندی اصلی</p>
-                    </div>
-                    <div class="stat-card">
-                        <h3>8</h3>
-                        <p>تگ‌های فعال</p>
-                    </div>
+                <h3>📊 آمار سیستم</h3>
+                <div class="result-item">
+                    <div>تعداد محتوا: <strong>${knowledgeBase.length}</strong></div>
+                    <div>دسته‌بندی‌ها: <strong>${[...new Set(knowledgeBase.map(item => item.category))].join(', ')}</strong></div>
                 </div>
             </div>
 
-            <!-- تب مدیریت محتوا -->
-            <div id="tab-add" class="tab-content">
-                <h3 style="margin-bottom: 25px; text-align: center;">📝 مدیریت پیشرفته محتوا</h3>
-                <div style="max-width: 600px; margin: 0 auto;">
-                    <div class="form-group">
-                        <label class="form-label">دسته‌بندی اصلی</label>
-                        <select id="addCategorySelect" class="form-control">
-                            <option value="علوم و فناوری">علوم و فناوری</option>
-                            <option value="ادبیات فارسی">ادبیات فارسی</option>
-                            <option value="SS">SS</option>
-                        </select>
-                    </div>
-                    
-                    <div class="form-group">
-                        <label class="form-label">متن محتوا</label>
-                        <textarea id="addContent" rows="8" class="form-control" placeholder="متن کامل محتوای خود را اینجا وارد کنید..."></textarea>
-                    </div>
-                    
-                    <button class="btn" onclick="addNewContent()" style="width: 100%; padding: 18px;">
-                        <span>➕ افزودن محتوای جدید</span>
-                    </button>
+            <div id="tab-test" class="tab-content">
+                <h3>🧪 تست API endpoints</h3>
+                <div class="api-test">
+                    <button class="btn" onclick="testAPI('/api/stats')">تست /api/stats</button>
+                    <button class="btn" onclick="testAPI('/api/search?q=node')">تست /api/search?q=node</button>
+                    <button class="btn" onclick="testAPI('/api/search/node')">تست /api/search/node</button>
+                    <div id="apiResult" style="margin-top: 20px;"></div>
                 </div>
             </div>
         </div>
 
         <script>
-            // توابع JavaScript ساده‌شده
             function switchTab(tabName) {
                 document.querySelectorAll('.tab-button').forEach(btn => btn.classList.remove('active'));
                 document.querySelectorAll('.tab-content').forEach(content => content.classList.remove('active'));
@@ -313,7 +375,6 @@ app.get('/', (req, res) => {
             
             async function performSearch() {
                 const query = document.getElementById('searchInput').value;
-                const category = document.getElementById('categoryFilter').value;
                 
                 if (!query) {
                     alert('لطفاً عبارت جستجو را وارد کنید');
@@ -321,18 +382,21 @@ app.get('/', (req, res) => {
                 }
                 
                 try {
-                    let url = \`/api/search/\${encodeURIComponent(query)}\`;
-                    if (category) {
-                        url += \`?category=\${encodeURIComponent(category)}\`;
-                    }
-                    
-                    const response = await fetch(url);
+                    // تست هر دو endpoint
+                    const response = await fetch(\`/api/search/\${encodeURIComponent(query)}\`);
                     const data = await response.json();
                     
                     displaySearchResults(data);
                 } catch (error) {
                     console.error('خطا در جستجو:', error);
-                    alert('خطا در اتصال به سرور');
+                    // اگر endpoint اول کار نکرد، endpoint دوم را تست کن
+                    try {
+                        const response = await fetch(\`/api/search?q=\${encodeURIComponent(query)}\`);
+                        const data = await response.json();
+                        displaySearchResults(data);
+                    } catch (error2) {
+                        alert('خطا در اتصال به سرور');
+                    }
                 }
             }
             
@@ -340,7 +404,7 @@ app.get('/', (req, res) => {
                 const container = document.getElementById('searchResults');
                 
                 if (!data.success || data.results.length === 0) {
-                    container.innerHTML = '<div style="text-align: center; padding: 40px;">نتیجه‌ای یافت نشد</div>';
+                    container.innerHTML = '<div class="result-item">نتیجه‌ای یافت نشد</div>';
                     return;
                 }
                 
@@ -349,9 +413,9 @@ app.get('/', (req, res) => {
                 data.results.forEach(result => {
                     resultsHTML += \`
                         <div class="result-item">
-                            <div><strong>\${result.category}</strong> - \${result.subcategory}</div>
+                            <div><span class="category-badge">\${result.category}</span></div>
                             <div>\${result.content}</div>
-                            <div>\${result.tags.map(tag => \`<span class="tag-badge">\${tag}</span>\`).join('')}</div>
+                            <div>\${result.tags.map(tag => \`<span class="category-badge" style="background: #7c3aed;">\${tag}</span>\`).join('')}</div>
                         </div>
                     \`;
                 });
@@ -359,36 +423,24 @@ app.get('/', (req, res) => {
                 container.innerHTML = resultsHTML;
             }
             
-            async function addNewContent() {
-                const category = document.getElementById('addCategorySelect').value;
-                const content = document.getElementById('addContent').value;
-                
-                if (!category || !content) {
-                    alert('لطفاً دسته‌بندی و محتوا را وارد کنید');
-                    return;
-                }
-                
+            async function testAPI(endpoint) {
                 try {
-                    const response = await fetch('/api/content', {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({ 
-                            category, 
-                            content
-                        })
-                    });
-                    
+                    const response = await fetch(endpoint);
                     const data = await response.json();
-                    
-                    if (data.success) {
-                        alert('محتوا با موفقیت افزوده شد!');
-                        document.getElementById('addContent').value = '';
-                    } else {
-                        alert(data.error || 'خطا در افزودن محتوا');
-                    }
+                    document.getElementById('apiResult').innerHTML = \`
+                        <div class="result-item">
+                            <strong>Endpoint:</strong> \${endpoint}<br>
+                            <strong>Status:</strong> \${response.status}<br>
+                            <strong>Response:</strong> <pre>\${JSON.stringify(data, null, 2)}</pre>
+                        </div>
+                    \`;
                 } catch (error) {
-                    console.error('خطا در افزودن محتوا:', error);
-                    alert('خطا در اتصال به سرور');
+                    document.getElementById('apiResult').innerHTML = \`
+                        <div class="result-item" style="background: #ef4444;">
+                            <strong>Endpoint:</strong> \${endpoint}<br>
+                            <strong>Error:</strong> \${error.message}
+                        </div>
+                    \`;
                 }
             }
             
@@ -406,13 +458,33 @@ app.get('/', (req, res) => {
   }
 });
 
-// 🔧 برای Vercel: فقط app را export کنید
-module.exports = app;
-
-// 🔧 برای توسعه محلی: سرور را اجرا کنید
-if (process.env.NODE_ENV !== 'production') {
-  app.listen(PORT, () => {
-    console.log('🚀 نطق مصطلح - پایگاه دانش پیشرفته راه‌اندازی شد!');
-    console.log('📍 آدرس: http://localhost:' + PORT);
+// 🔧 هندلر خطای 404
+app.use((req, res) => {
+  console.log(`404 - Route not found: ${req.method} ${req.url}`);
+  res.status(404).json({ 
+    success: false, 
+    error: 'مسیر یافت نشد',
+    path: req.url,
+    method: req.method,
+    availableRoutes: [
+      'GET /',
+      'GET /api/stats',
+      'GET /api/search/:query',
+      'GET /api/search?q=term',
+      'POST /api/content'
+    ]
   });
-}
+});
+
+// 🔧 هندلر خطای سرور
+app.use((err, req, res, next) => {
+  console.error('Server error:', err);
+  res.status(500).json({ 
+    success: false, 
+    error: 'خطای داخلی سرور',
+    message: err.message
+  });
+});
+
+// 🔧 برای Vercel: فقط app را export کنید - بدون app.listen
+module.exports = app;
