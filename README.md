@@ -1,31 +1,46 @@
-# نطق مصطلح - پایگاه دانش عظیم
+# Advanced Management System
 
-یک پایگاه دانش پیشرفته برای محتوای فارسی که روی Vercel مستقر شده است.
+## 📋 درباره پروژه
+این پروژه بخشی از اکوسیستم **TetraShop** است.
+
+- **نوع:** NODEJS
+- **تعداد فایل‌ها:** 20735
 
 ## 🚀 ویژگی‌ها
+- کد تمیز و بهینه
+- آماده برای توسعه
+- پشتیبانی از آخرین تکنولوژی‌ها
 
-- 🔍 **جستجوی پیشرفته** در محتوای فارسی
-- 📚 **دسته‌بندی هوشمند** محتوا
-- 📝 **افزودن محتوای جدید** به صورت پویا
-- 🌐 **رابط کاربری فارسی** و ریسپانسیو
-- 🚀 **مستقر روی Vercel** با عملکرد بالا
+## 📦 نصب و راه‌اندازی
 
-## 📖 دسته‌بندی‌های موجود
+### پیش‌نیازها
+- Node.js 16+
 
-- **ادبیات** (شعر کلاسیک، شعر معاصر)
-- **فلسفه** (فلسفه اسلامی، فلسفه غرب)  
-- **علوم** (فیزیک، ریاضیات)
-- **تاریخ** (تاریخ ایران، تاریخ جهان)
-
-## 🛠️ APIها
-
-- `GET /api/search/:query` - جستجو در پایگاه دانش
-- `GET /api/categories` - دریافت تمام دسته‌بندی‌ها
-- `POST /api/content` - افزودن محتوای جدید
-
-## 🚀 استقرار روی Vercel
-
+### نصب
 ```bash
-# استقرار با Vercel CLI
-npm install -g vercel
-vercel --prod
+git clone https://github.com/tetrashop/advanced-management-system.git
+cd advanced-management-system
+npm install
+```
+
+## 🔧 استفاده
+```bash
+npm start
+```
+
+## 🤝 مشارکت
+1. Fork کنید
+2. Branch جدید: `git checkout -b feature/your-feature`
+3. Commit: `git commit -m 'Add feature'`
+4. Push: `git push origin feature/your-feature`
+5. Pull Request باز کنید
+
+## 📝 مجوز
+MIT License
+
+## 🌐 ارتباط با ما
+- **وبسایت:** [tetrashop.ir](https://tetrashop.ir)
+- **گیت‌هاب:** [github.com/tetrashop](https://github.com/tetrashop)
+
+---
+**آخرین به‌روزرسانی:** 2026-08-12
